@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
+import streamlit as st
 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -424,26 +425,13 @@ data = [
 results_df = pd.DataFrame(data, columns=columns)
 
 # Display calculated values
-display(results_df.round(4)
-       .style
-    .hide(axis="index")
-   .set_table_styles([
-        {
-            "selector": "th",
-            "props": [("font-weight", "bold")]
-        },
-        {
-            "selector": "td.col0",
-            "props": [("font-weight", "bold")]
+st.subheader("Model Comparison Results")
 
-        }
-       ,
-        {
-            "selector": "td.col1",
-            "props": [("font-weight", "bold"), ("text-align", "left")]
-        }
-    ])
-       )
+st.dataframe(
+    results_df.round(4),
+    use_container_width=True,
+    hide_index=True
+)
 
 
 # In[26]:
