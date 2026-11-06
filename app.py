@@ -13,7 +13,9 @@ from sklearn.metrics import (
     f1_score,
     confusion_matrix,
     classification_report,
-    ConfusionMatrixDisplay
+    ConfusionMatrixDisplay,
+    roc_auc_score,
+    matthews_corrcoef
 )
 
 # --------------------------------------------------
@@ -106,6 +108,21 @@ st.markdown("""
         padding-top: 4rem !important;
         padding-bottom: 1rem !important;
     }
+
+    .st-key-analysis_model_select {
+        min-width: 300px !important;
+        max-width: 400px !important;
+        width: 350px !important;
+    }
+    .hero-label {
+        color: #138B80;
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 1px;
+        display: block;
+        margin-bottom: 10px !important;
+        padding-bottom: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -146,11 +163,11 @@ with st.container(border=True, key="assignment_header"):
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("<div style='text-align:right'><b>BITS ID:</b> 2026AK05722</div>",
+        st.markdown("<div style='text-align:right; font-size: 18px;font-weight: 700;color: #172554;'><b>BITS ID:</b> 2026AK05722</div>",
                     unsafe_allow_html=True)
 
     with col2:
-        st.markdown("<div style='text-align:left'><b>Assignment:</b> II</div>",
+        st.markdown("<div style='text-align:left; font-size: 18px;font-weight: 700;'><b>Assignment:</b> 2</div>",
                     unsafe_allow_html=True)
 
     st.markdown(
@@ -162,18 +179,10 @@ with st.container(border=True, key="assignment_header"):
         "Multiclass classification of handwritten digits from 0 to 9 "
         "using the PenDigits dataset."
     )
+ 
+    
 
-    st.caption(
-        "📁 Dataset: Pen-Based Recognition of Handwritten Digits "
-        "(PenDigits) | UCI Machine Learning Repository"
-    )
-
-st.markdown(
-    "<hr style='margin: 1px 0; padding: 0; border: none; "
-    "border-top: 1px solid #d1d5db;'>",
-    unsafe_allow_html=True
-)
-
+    
 
 
 # --------------------------------------------------
@@ -281,12 +290,35 @@ with st.sidebar:
 
     st.caption("M.Tech AI & ML | 📊 Model Evaluation Project")
 
+# --------------------------------------------------
+# DATASET REFERENCE LINK
+# --------------------------------------------------
 
+st.markdown(
+    """
+    <div style="margin-bottom:20px;">
+        <a href="https://archive.ics.uci.edu/dataset/81/pen-based+recognition+of+handwritten+digits"
+           target="_blank"
+           style="
+               color: #172554;
+               font-weight: 700;
+               font-size: 14px;
+               text-decoration: none;
+           ">
+            📁 <span style="color: #138B80;font-weight: 700;font-size: 16px;">Dataset: </span> 
+                            <span style="text-decoration: underline;"> Pen-Based Recognition of Handwritten Digits
+                            (PenDigits) | UCI Machine Learning Repository</span>
+        </a>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # --------------------------------------------------
 # DASHBOARD CONTENT
 # --------------------------------------------------
+
 
 if uploaded_file is None and not use_default_test:
 
@@ -451,20 +483,48 @@ def evaluate_model(model, X_test, y_test):
 
     predictions = model.predict(X_test)
 
+    # Multiclass AUC (One-vs-Rest)
+    auc = np.nan
+
+    if hasattr(model, "predict_proba"):
+        try:
+            probabilities = model.predict_proba(X_test)
+
+            auc = roc_auc_score(
+                y_test,
+                probabilities,
+                multi_class="ovr",
+                average="weighted",
+                labels=model.classes_
+            )
+
+        except ValueError:
+            auc = np.nan
+
     metrics = {
         "Accuracy": accuracy_score(y_test, predictions),
+
+        "AUC": auc,
+
         "Precision": precision_score(
-            y_test, predictions, average="weighted",
+            y_test, predictions,
+            average="weighted",
             zero_division=0
         ),
+
         "Recall": recall_score(
-            y_test, predictions, average="weighted",
+            y_test, predictions,
+            average="weighted",
             zero_division=0
         ),
+
         "F1 Score": f1_score(
-            y_test, predictions, average="weighted",
+            y_test, predictions,
+            average="weighted",
             zero_division=0
-        )
+        ),
+
+        "MCC": matthews_corrcoef(y_test, predictions)
     }
 
     return predictions, metrics
@@ -526,30 +586,63 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-if not compare_all:
+# --------------------------------------------------
+# MODEL PERFORMANCE CARDS
+# --------------------------------------------------
 
-    metrics = results[models_to_evaluate[0]]
+card_model = selected_model if selected_model in results else models_to_evaluate[0]
+metrics = results[card_model]
 
-    c1, c2, c3, c4 = st.columns(4)
+metric_items = [
+    ("ACCURACY", "Accuracy"),
+    ("AUC", "AUC"),
+    ("PRECISION", "Precision"),
+    ("RECALL", "Recall"),
+    ("F1", "F1 Score"),
+    ("MCC", "MCC")
+]
 
-    metric_items = [
-        ("Accuracy", metrics["Accuracy"]),
-        ("Precision", metrics["Precision"]),
-        ("Recall", metrics["Recall"]),
-        ("F1 Score", metrics["F1 Score"])
-    ]
+rankings = {}
 
-    for col, (label, value) in zip(
-        [c1, c2, c3, c4], metric_items
-    ):
+for label, key in metric_items:
+    valid = {
+        name: result[key]
+        for name, result in results.items()
+        if pd.notna(result.get(key, np.nan))
+    }
 
-        with col:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">{label}</div>
-                <div class="metric-value">{value:.2%}</div>
+    rankings[key] = {
+        name: rank + 1
+        for rank, name in enumerate(
+            sorted(valid, key=valid.get, reverse=True)
+        )
+    }
+
+columns = st.columns(6)
+
+for col, (label, key) in zip(columns, metric_items):
+
+    value = metrics.get(key, np.nan)
+    rank = rankings[key].get(card_model)
+
+    rank_text = (
+        "AUC unavailable" if pd.isna(value)
+        else "Best of " + str(len(results)) if rank == 1
+        else f"{rank}{'th' if rank not in [2, 3] else 'nd' if rank == 2 else 'rd'} of {len(results)}"
+    )
+
+    with col:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">
+                {"N/A" if pd.isna(value) else f"{value:.4f}"}
             </div>
-            """, unsafe_allow_html=True)
+            <div style="font-size:11px;color:#64748b;margin-top:10px;">
+                {rank_text}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # --------------------------------------------------
@@ -570,7 +663,8 @@ st.markdown(
 if compare_all:
     analysis_model = st.selectbox(
         "Select model for detailed analysis",
-        models_to_evaluate
+        models_to_evaluate,
+        key="analysis_model_select"
     )
 else:
     analysis_model = models_to_evaluate[0]
@@ -633,6 +727,7 @@ with col2:
         use_container_width=True,
         height=450
     )
+    
 
 
 # --------------------------------------------------
@@ -655,7 +750,7 @@ if compare_all:
     comparison_df = pd.DataFrame(results).T
 
     st.dataframe(
-        comparison_df.style.format("{:.2%}"),
+        comparison_df.style.format("{:.4f}"),
         use_container_width=True
     )
 
