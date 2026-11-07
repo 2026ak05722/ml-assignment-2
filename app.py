@@ -620,9 +620,9 @@ for col, (label, key) in zip(columns, metric_items):
     rank = rankings[key].get(card_model)
 
     if pd.isna(value):
-        rank_text = "AUC unavailable"
+        rank_text = f"{label} unavailable"
     elif not compare_all:
-        rank_text = "Selected model"
+        rank_text = ""
     elif rank == 1:
         rank_text = f"Best of {len(results)}"
     else:
@@ -636,9 +636,7 @@ for col, (label, key) in zip(columns, metric_items):
             <div class="metric-value">
                 {"N/A" if pd.isna(value) else f"{value:.4f}"}
             </div>
-            <div style="font-size:11px;color:#64748b;margin-top:10px;">
-                {rank_text}
-            </div>
+            {f'<div style="font-size:11px;color:#64748b;margin-top:10px;">{rank_text}</div>' if rank_text else ''}
         </div>
         """, unsafe_allow_html=True)
 
