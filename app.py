@@ -29,102 +29,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --------------------------------------------------
-# CUSTOM CSS
-# --------------------------------------------------
 
-st.markdown("""
-<style>
-    .stApp {
-        background-color: #f5f7fb;
-    }
-
-    .main-title {
-        font-size: 30px;
-        font-weight: 750;
-        color: #172554;
-        margin-bottom: 4px;
-    }
-
-    .sub-title {
-        color: #64748b;
-        font-size: 14px;
-        margin-bottom: 25px;
-    }
-
-    .metric-card {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-
-    .metric-label {
-        color: #64748b;
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .metric-value {
-        color: #172554;
-        font-size: 28px;
-        font-weight: 750;
-        margin-top: 7px;
-    }
-
-    .section-title {
-        color: #172554;
-        font-size: 20px;
-        font-weight: 700;
-        margin-top: 15px;
-    }
-
-    div[data-testid="stSidebar"] {
-        background-color: #ffffff;
-    }
-
-    div.stButton > button {
-        background-color: #2563eb;
-        color: white;
-        border-radius: 8px;
-        border: none;
-        padding: 10px 20px;
-        font-weight: 600;
-    }
-
-    div.stButton > button:hover {
-        background-color: #1d4ed8;
-        color: white;
-    }
-    .st-key-assignment_header {
-        text-align: center;
-    }
-
-    .st-key-assignment_header [data-testid="stMarkdownContainer"] {
-        text-align: center;
-    }
-    .block-container {
-        padding-top: 4rem !important;
-        padding-bottom: 1rem !important;
-    }
-
-    .st-key-analysis_model_select {
-        min-width: 300px !important;
-        max-width: 400px !important;
-        width: 350px !important;
-    }
-    .hero-label {
-        color: #138B80;
-        font-weight: 700;
-        font-size: 13px;
-        letter-spacing: 1px;
-        display: block;
-        margin-bottom: 10px !important;
-        padding-bottom: 10px;
-    }
-</style>
-""", unsafe_allow_html=True)
 
 
 # --------------------------------------------------
@@ -132,7 +37,28 @@ st.markdown("""
 # --------------------------------------------------
 
 BASE_DIR = Path(__file__).resolve().parent
+
+ASSET_DIR = BASE_DIR / "asset"
+DATA_DIR = BASE_DIR / "data"
 MODEL_DIR = BASE_DIR / "model"
+
+STYLE_FILE = ASSET_DIR / "style.css"
+
+DEFAULT_TEST_PATH = DATA_DIR / "pendigits.tes"
+DEFAULT_TRAIN_PATH = DATA_DIR / "pendigits.tra"
+
+# --------------------------------------------------
+# LOAD EXTERNAL CSS
+# --------------------------------------------------
+
+if STYLE_FILE.exists():
+    with open(STYLE_FILE, "r", encoding="utf-8") as css:
+        st.markdown(
+            f"<style>{css.read()}</style>",
+            unsafe_allow_html=True
+        )
+else:
+    st.warning("CSS file not found: asset/style.css")
 
 MODEL_FILES = {
     "Logistic Regression": MODEL_DIR / "logistic_regression.pkl",
@@ -156,8 +82,21 @@ def load_model(model_path):
 
 with st.container(border=True, key="assignment_header"):
 
-    st.caption(
-        "BITS PILANI | M.Tech AI & ML | AIMLZG565 - Machine Learning"
+    st.markdown(
+        """
+        <div style="
+            text-align: center;
+            width: 100%;
+            font-size: 15px;
+            font-weight: 500;
+            color: #808080;
+            padding: 8px 0;
+            margin-left: -40px;
+        ">
+            BITS PILANI | M.Tech AI & ML | AIMLZG565 - Machine Learning
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
     col1, col2 = st.columns(2)
@@ -181,25 +120,16 @@ with st.container(border=True, key="assignment_header"):
     )
  
     
-
-    
-
-
 # --------------------------------------------------
 # SIDEBAR
 # --------------------------------------------------
 
-# --------------------------------------------------
-# SIDEBAR
-# --------------------------------------------------
 
 with st.sidebar:
 
     st.markdown("## 🧪 Experiment Setup")
 
     st.markdown("### STEP 01 | Test Dataset")
-
-    DEFAULT_TEST_PATH = BASE_DIR / "pendigits.tes"
 
     # Download sample CSV - first
     if DEFAULT_TEST_PATH.exists():
@@ -248,15 +178,28 @@ with st.sidebar:
         "use_default_test", False
     )
 
-    # Target column
+    # Target column - Dynamic selection
     st.markdown("### STEP 02 | Target Column")
 
-    target_column = "digit"
+    if uploaded_file is not None and uploaded_file.name.lower().endswith(".csv"):
 
-    st.text_input(
-        "Target column name",
-        value=target_column,
-        disabled=True
+        uploaded_file.seek(0)
+        target_options = list(pd.read_csv(uploaded_file, nrows=0).columns)
+        uploaded_file.seek(0)
+
+    else:
+        target_options = ["digit"]
+
+    default_index = (
+        target_options.index("digit")
+        if "digit" in target_options
+        else len(target_options) - 1
+    )
+
+    target_column = st.selectbox(
+        "Select target column",
+        options=target_options,
+        index=default_index
     )
 
     # Model selection
@@ -269,9 +212,16 @@ with st.sidebar:
     }
 
     if available_models:
+        def sync_sidebar_model():
+            st.session_state["dashboard_model_select"] = (
+                st.session_state["sidebar_model_select"]
+            )
+
         selected_model = st.selectbox(
             "Choose a model",
-            list(available_models.keys())
+            list(available_models.keys()),
+            key="sidebar_model_select",
+            on_change=sync_sidebar_model
         )
     else:
         selected_model = None
@@ -372,6 +322,8 @@ try:
 
     if uploaded_file is not None:
 
+        uploaded_file.seek(0)
+
         if uploaded_file.name.lower().endswith(".tes"):
 
             df = pd.read_csv(
@@ -432,7 +384,19 @@ with c4:
 
 
 with st.expander("Preview Test Dataset", expanded=True):
-    st.dataframe(df.head(10), use_container_width=True)
+
+    preview_df = df.head(10)
+
+    styled_dataset = preview_df.style.set_table_attributes(
+        'class="dataset-table"'
+    )
+
+    st.markdown(
+        '<div class="dataset-table-wrap">'
+        + styled_dataset.to_html()
+        + '</div>',
+        unsafe_allow_html=True
+    )
 
 
 # --------------------------------------------------
@@ -529,16 +493,37 @@ def evaluate_model(model, X_test, y_test):
 
     return predictions, metrics
 
-
 # --------------------------------------------------
-# EVALUATION
+# MAIN DASHBOARD MODEL SELECTION
 # --------------------------------------------------
 
+def sync_dashboard_model():
+    st.session_state["sidebar_model_select"] = (
+        st.session_state["dashboard_model_select"]
+    )
+
+dashboard_model = st.selectbox(
+    "Choose a model",
+    list(available_models.keys()),
+    key="dashboard_model_select",
+    on_change=sync_dashboard_model
+)
+
+col1, col2 = st.columns([2, 3])
+
+with col1:
+    st.markdown(
+        f"**Selected Model:** {dashboard_model}"
+    )
+
+with col2:
+    success_placeholder = st.empty()
+
+# Decide which models to evaluate
 if compare_all:
     models_to_evaluate = list(available_models.keys())
 else:
-    models_to_evaluate = [selected_model] if selected_model else []
-
+    models_to_evaluate = [dashboard_model]
 
 if not models_to_evaluate:
     st.warning("Select at least one available model.")
@@ -570,6 +555,10 @@ except Exception as e:
     )
     st.stop()
 
+success_placeholder.success(
+    "Model evaluation completed successfully.",
+    icon="✅"
+)
 
 # --------------------------------------------------
 # MODEL PERFORMANCE CARDS
@@ -590,7 +579,12 @@ st.markdown(
 # MODEL PERFORMANCE CARDS
 # --------------------------------------------------
 
-card_model = selected_model if selected_model in results else models_to_evaluate[0]
+card_model = (
+    dashboard_model
+    if dashboard_model in results
+    else models_to_evaluate[0]
+)
+
 metrics = results[card_model]
 
 metric_items = [
@@ -625,11 +619,15 @@ for col, (label, key) in zip(columns, metric_items):
     value = metrics.get(key, np.nan)
     rank = rankings[key].get(card_model)
 
-    rank_text = (
-        "AUC unavailable" if pd.isna(value)
-        else "Best of " + str(len(results)) if rank == 1
-        else f"{rank}{'th' if rank not in [2, 3] else 'nd' if rank == 2 else 'rd'} of {len(results)}"
-    )
+    if pd.isna(value):
+        rank_text = "AUC unavailable"
+    elif not compare_all:
+        rank_text = "Selected model"
+    elif rank == 1:
+        rank_text = f"Best of {len(results)}"
+    else:
+        suffix = "nd" if rank == 2 else "rd" if rank == 3 else "th"
+        rank_text = f"{rank}{suffix} of {len(results)}"
 
     with col:
         st.markdown(f"""
@@ -722,12 +720,29 @@ with col2:
 
     report_df = pd.DataFrame(report).transpose()
 
-    st.dataframe(
-        report_df.style.format("{:.3f}"),
-        use_container_width=True,
-        height=450
+    # Correct accuracy row
+    report_df.loc["accuracy", "precision"] = np.nan
+    report_df.loc["accuracy", "recall"] = np.nan
+    report_df.loc["accuracy", "f1-score"] = report["accuracy"]
+    report_df.loc["accuracy", "support"] = len(y_test)
+
+    # Show complete class labels
+    report_df.index.name = "Class"
+    report_df = report_df.reset_index()
+
+    styled_report = report_df.style.format({
+        "precision": "{:.3f}",
+        "recall": "{:.3f}",
+        "f1-score": "{:.3f}",
+        "support": "{:.0f}"
+    }, na_rep="-").set_table_attributes(
+        'class="report-table"'
     )
-    
+
+    st.markdown(
+        styled_report.to_html(),
+        unsafe_allow_html=True
+    )    
 
 
 # --------------------------------------------------
@@ -803,8 +818,3 @@ st.download_button(
     file_name="model_evaluation_results.csv",
     mime="text/csv"
 )
-
-st.success("Model evaluation completed successfully.")
-
-st.caption("Note: Models are evaluated on the uploaded test data. "
-           "No model training is performed in this application.")

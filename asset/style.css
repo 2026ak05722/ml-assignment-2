@@ -1,0 +1,216 @@
+<style>
+    .stApp {
+        background-color: #f5f7fb;
+    }
+
+    .main-title {
+        font-size: 30px;
+        font-weight: 750;
+        color: #172554;
+        margin-bottom: 4px;
+    }
+
+    .sub-title {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 25px;
+    }
+
+    .metric-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .metric-label {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .metric-value {
+        color: #172554;
+        font-size: 28px;
+        font-weight: 750;
+        margin-top: 7px;
+    }
+
+    .section-title {
+        color: #172554;
+        font-size: 20px;
+        font-weight: 700;
+        margin-top: 15px;
+    }
+
+    div[data-testid="stSidebar"] {
+        background-color: #ffffff;
+    }
+
+    div.stButton > button {
+        background-color: #2563eb;
+        color: white;
+        border-radius: 8px;
+        border: none;
+        padding: 10px 20px;
+        font-weight: 600;
+    }
+
+    div.stButton > button:hover {
+        background-color: #1d4ed8;
+        color: white;
+    }
+    .st-key-assignment_header {
+        text-align: center;
+    }
+
+    .st-key-assignment_header [data-testid="stMarkdownContainer"] {
+        text-align: center;
+    }
+    .block-container {
+        padding-top: 4rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    .st-key-analysis_model_select {
+        min-width: 300px !important;
+        max-width: 400px !important;
+        width: 350px !important;
+    }
+    .hero-label {
+        color: #138B80;
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 1px;
+        display: block;
+        margin-bottom: 10px !important;
+        padding-bottom: 10px;
+    }
+	
+	/* Main dashboard model dropdown only */
+	.st-key-dashboard_model_select {
+		width: 250px !important;
+		min-width: 250px !important;
+		max-width: 250px !important;
+	}
+	/* Classification Report Table */
+	.report-table {
+		width: 100%;
+		border-collapse: separate !important;
+		border-spacing: 0;
+		background-color: white;
+		border: 1px solid #cbd5e1 !important;
+		border-radius: 10px;
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+
+	/* Table headers */
+	.report-table thead th {
+		font-weight: 700 !important;
+		color: #172554 !important;
+		background-color: #eaf0f8 !important;
+		padding: 3px 8px !important;
+		line-height: 1 !important;
+		height: 26px !important;
+		text-align: left;
+		border-right: 1px solid #dbe3ee;
+		border-bottom: 1px solid #dbe3ee;
+	}
+
+	/* Table rows - compact height */
+	.report-table tbody td {
+		padding: 2px 8px !important;
+		line-height: 1 !important;
+		height: 26px !important;
+		color: #172554;
+		border-right: 1px solid #dbe3ee;
+		border-bottom: 1px solid #dbe3ee;
+	}
+	
+	/* Remove unnecessary last-column border */
+	.report-table th:last-child,
+	.report-table td:last-child {
+		border-right: none;
+	}
+
+	/* Keep bottom border visible */
+	.report-table tbody tr:last-child td {
+		border-bottom: none;
+	}
+	/* Dataset Preview Table */
+	.dataset-table-wrap {
+		width: 100%;
+		overflow-x: auto;
+		border: 1px solid #cbd5e1;
+		border-radius: 10px;
+		background: white;
+	}
+
+	.dataset-table {
+		width: max-content;
+		min-width: 100%;
+		border-collapse: separate !important;
+		border-spacing: 0;
+		font-size: 13px;
+	}
+
+	/* Dark, bold header */
+	.dataset-table thead th {
+		position: sticky;
+		top: 0;
+		background: #eaf0f8 !important;
+		color: #172554 !important;
+		font-weight: 700 !important;
+		padding: 8px 10px;
+		border: 1px solid #dbe3ee;
+		white-space: nowrap;
+		z-index: 3;
+	}
+
+	/* Data cells */
+	.dataset-table tbody td {
+		padding: 6px 10px;
+		color: #172554;
+		border: 1px solid #e2e8f0;
+		white-space: nowrap;
+		background: white;
+	}
+
+	/* Sticky index column */
+	.dataset-table th:first-child,
+	.dataset-table td:first-child {
+		position: sticky;
+		left: 0;
+		min-width: 45px;
+		background: #eaf0f8 !important;
+		z-index: 4;
+		font-weight: 600;
+	}
+
+	/* Sticky target column - digit */
+	.dataset-table th:last-child,
+	.dataset-table td:last-child {
+		position: sticky;
+		right: 0;
+		width: 45px !important;
+		min-width: 45px !important;
+		max-width: 45px !important;
+		padding: 5px 4px !important;
+		text-align: center !important;
+		background: #eaf0f8 !important;
+		z-index: 4;
+		font-weight: 700;
+		border-left: 2px solid #cbd5e1;
+	}
+	.dataset-table tbody td,
+	.dataset-table thead th {
+		text-align: center;
+	}
+	/* Classification Report - Bold Support values */
+	.report-table tbody td:last-child {
+		font-weight: 700 !important;
+		color: #172554 !important;
+	}
+</style>
